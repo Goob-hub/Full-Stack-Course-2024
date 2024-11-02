@@ -25,8 +25,6 @@ app.get("/", async (req, res) => {
 });
 
 app.post("/", async (req, res) => {
-  console.log(req.body);
-
   // Step 2: Play around with the drop downs and see what gets logged.
   // Use axios to make an API request to the /filter endpoint. Making
   // sure you're passing both the type and participants queries.
@@ -35,6 +33,26 @@ app.post("/", async (req, res) => {
   // Step 3: If you get a 404 error (resource not found) from the API request.
   // Pass an error to the index.ejs to tell the user:
   // "No activities that match your criteria."
+
+  try {
+    // https://secrets-api.appbrewery.com/filter?score=5&apiKey=b886c845-9989-43aa-8c60-ea4a669bb587
+    const request = req.body;
+    const response = await axios.get(`https://bored-api.appbrewery.com/filter?type=${request.type}&participants=${request.participants}`);
+    const result = response.data;
+    res.render("index.ejs", { data: result });
+  } catch (error) {
+    console.error("Failed to make request:", error.message);
+    if(error.status === 404) {
+      res.render("index.ejs", {
+        error: "No activities match your search!",
+      });
+    } else {
+      res.render("index.ejs", {
+        error: error.message,
+      });
+    }
+  }
+
 });
 
 app.listen(port, () => {
