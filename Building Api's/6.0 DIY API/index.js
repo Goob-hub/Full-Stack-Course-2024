@@ -18,7 +18,7 @@ app.get("/jokes/:id", (req, res) => {
   let requestedId = req.params.id;
 
   if(requestedId <= 0 || (requestedId - 1) > jokes.length) {
-    res.send("No jokes exist with that id");
+    res.status(404).json({error: "No jokes exist with that id"});
   } else {
     res.send(jokes[requestedId - 1]);
   }
@@ -36,7 +36,7 @@ app.get("/filter", (req, res) => {
   });
 
   if(filteredJokes.length === 0) {
-    res.send("Jokes on you! We dont have those kinds of jokes here")
+    res.status(404).json({error: "Jokes on you! We dont have those kinds of jokes here"});
   } else {
     res.send(filteredJokes);
   }
@@ -44,17 +44,82 @@ app.get("/filter", (req, res) => {
 
 //4. POST a new joke
 app.post("/jokes", (req, res) => {
-  console.log(req.body);
-  res.send("heheheheh");
-})
+  if(!req.body.text || !req.body.type) {
+    res.status(404).json({error: "You did not give me enough information to post your joke nerd."});
+    return;
+  }
+
+  let joke = { id: jokes.length - 1, text: req.body.text, type: req.body.type }
+  jokes.push(joke);
+  res.send("Your joke was successfully posted :D");
+});
 
 //5. PUT a joke
+app.put("/jokes/:id", (req, res) => {
+  if(!req.params.id) {
+    res.status(404).json({error: "You did not specify what joke to replace dum dum"});
+    return;
+  }
+
+  let jokeToChange = jokes[req.params.id - 1];
+  
+  jokeToChange.jokeText = req.body.text;
+  jokeToChange.jokeType = req.body.type;
+
+  res.send(jokeToChange);
+});
 
 //6. PATCH a joke
+app.patch("/jokes/:id", (req, res) => {
+  if(!req.params.id) {
+    res.status(404).json({error: "You did not specify what joke to change dum dum"});
+    return;
+  }
+
+  let jokeToChange = jokes[req.params.id - 1];
+
+  if(req.body.text) {
+    jokeToChange.jokeText = req.body.text;
+  }
+
+  if(req.body.type) {
+    jokeToChange.jokeType = req.body.type;
+  }
+
+  res.send(jokeToChange);
+});
 
 //7. DELETE Specific joke
+app.delete("jokes/:id", (req, res) => {
+  if(!req.params.id) {
+    res.status(404).json({error: "You did not specify what joke to delete dum dum"});
+    return;
+  }
+
+  let jokeIndex = req.params.id - 1;
+
+  jokes[jokeIndex].splice(jokeIndex, 1);
+  
+  for(let i = jokeIndex; i < jokes.length; i++) {
+    let curJoke = jokes[i];
+    curJoke.id -= 1;
+  }
+
+  res.send("Joke successfully deleted!");
+
+});
 
 //8. DELETE All jokes
+app.delete("jokes/all", (req, res) => { 
+  let userKey = req.query.key;
+
+  if(userKey = masterKey) {
+    jokes = [];
+    res.send("All jokes have been eradicated.");
+  } else {
+    res.status(404).json({ error: `You aren't cool enough, no jokes were deleted.` });
+  }
+});
 
 app.listen(port, () => {
   console.log(`Successfully started server on port ${port}.`);
