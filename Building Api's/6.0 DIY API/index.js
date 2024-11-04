@@ -113,7 +113,7 @@ app.delete("jokes/:id", (req, res) => {
 app.delete("jokes/all", (req, res) => { 
   let userKey = req.query.key;
 
-  if(userKey = masterKey) {
+  if(userKey === masterKey) {
     jokes = [];
     res.send("All jokes have been eradicated.");
   } else {
