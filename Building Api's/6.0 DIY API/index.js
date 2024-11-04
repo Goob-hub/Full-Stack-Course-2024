@@ -8,12 +8,45 @@ const masterKey = "4VGP2DN-6EWM4SJ-N6FGRHV-Z3PR3TT";
 app.use(bodyParser.urlencoded({ extended: true }));
 
 //1. GET a random joke
+app.get("/random", (req, res) => {
+  let randomJoke = getRandJoke();
+  res.send(randomJoke)
+});
 
 //2. GET a specific joke
+app.get("/jokes/:id", (req, res) => {
+  let requestedId = req.params.id;
+
+  if(requestedId <= 0 || (requestedId - 1) > jokes.length) {
+    res.send("No jokes exist with that id");
+  } else {
+    res.send(jokes[requestedId - 1]);
+  }
+});
 
 //3. GET a jokes by filtering on the joke type
+app.get("/filter", (req, res) => {
+  let jokeType = req.query.type;
+  let filteredJokes = [];
+
+  jokes.filter(joke => {
+    if(joke.jokeType === jokeType) {
+      filteredJokes.push(joke);
+    }
+  });
+
+  if(filteredJokes.length === 0) {
+    res.send("Jokes on you! We dont have those kinds of jokes here")
+  } else {
+    res.send(filteredJokes);
+  }
+});
 
 //4. POST a new joke
+app.post("/jokes", (req, res) => {
+  console.log(req.body);
+  res.send("heheheheh");
+})
 
 //5. PUT a joke
 
@@ -26,6 +59,10 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.listen(port, () => {
   console.log(`Successfully started server on port ${port}.`);
 });
+
+function getRandJoke() {
+  return jokes[Math.floor(Math.random() * jokes.length)];
+}
 
 var jokes = [
   {
