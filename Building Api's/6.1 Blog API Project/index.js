@@ -41,14 +41,65 @@ app.use(bodyParser.urlencoded({ extended: true }));
 //Write your code here//
 
 //CHALLENGE 1: GET All posts
-
+app.get("/posts", (req, res) => {
+  res.send(posts);
+});
 //CHALLENGE 2: GET a specific post by id
+app.get("/posts/:id", (req, res) => {
+  let postId = parseInt(req.params.id);
+  let selectedPost;
 
+  posts.forEach(post => {
+    if(post.id === postId) {
+      selectedPost = post;
+    }
+  });
+
+  res.send(selectedPost);
+});
 //CHALLENGE 3: POST a new post
-
+app.post("/posts", (req, res) => { 
+  let newPost = req.body;
+  newPost.id = lastId + 1;
+  lastId++;
+  posts.push(newPost);
+  res.sendStatus(200);
+});
 //CHALLENGE 4: PATCH a post when you just want to update one parameter
+app.patch("/posts/:id", (req, res) => {
+  let updatedPost = req.body;
+  let postId = parseInt(req.params.id);
+  
+  posts.forEach(post => {
+    if(post.id === postId) {
+      post.title = updatedPost.title;
+      post.content = updatedPost.content;
+      post.author = updatedPost.author;
+    }
+  });
+  
+  res.sendStatus(200);
+});
 
 //CHALLENGE 5: DELETE a specific post by providing the post id.
+app.delete("/posts/:id", (req, res) => {
+  let postId = parseInt(req.params.id);
+  let postIndex = posts.findIndex(post => { return post.id === postId;  });
+
+  if(postIndex !== -1) {
+    posts.splice(postIndex, 1);
+  }
+
+  posts.forEach(post => {
+    if(post.id > postId) {
+      post.id--;
+    }
+  });
+
+  lastId--;
+
+  res.sendStatus(200);
+});
 
 app.listen(port, () => {
   console.log(`API is running at http://localhost:${port}`);
