@@ -1,5 +1,17 @@
+import 'dotenv/config'
 import express from "express";
 import bodyParser from "body-parser";
+import pg from 'pg';
+ 
+const db = new pg.Client({
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASSWORD,
+  port: parseInt(process.env.DB_PORT),
+});
+
+db.connect();
 
 const app = express();
 const port = 3000;
@@ -11,6 +23,19 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
 let currentQuestion = {};
+let quiz = [];
+
+db.query("SELECT * FROM flags", (err, res) => {
+  if(err) {
+    console.error(err.stack);
+  } else {
+    quiz = res.rows;
+    console.log(quiz);
+  }
+  
+  db.end();
+});
+
 
 // GET home page
 app.get("/", (req, res) => {
