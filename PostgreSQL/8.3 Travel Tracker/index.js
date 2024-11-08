@@ -19,28 +19,51 @@ const port = 3000;
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
-let visitedCountries = [];
-
-let data = {
-  total: 0,
-  countries: visitedCountries
-}
-
-db.query("SELECT * FROM visited_countries", (err, res) => {
-  if(err) {
-    console.error(err.stack);
-  } else {
-    res.rows.forEach(row => {
-      visitedCountries.push(row.country_code);
-      data.total++;
-    });
-  }
-});
-
+let data;
 
 app.get("/", async (req, res) => {
-  console.log(visitedCountries);
+  data = {
+    total: 0,
+    countries: []
+  };
+
+  try { 
+    let response = await db.query("SELECT * FROM visited_countries");
+    let dbData = response.rows;
+    dbData.forEach(country => {
+      data.countries.push(country.country_code);
+      data.total++;
+    });
+  } catch (error) {
+    console.error(error.message);
+  }
   res.render("index.ejs", data);
+  
+});
+
+app.post("/add", async (req, res) => {
+  let countryName = req.body.country;
+  let isDuplicateCountry = false;
+
+  try { 
+    let response = await db.query(`SELECT * FROM countries WHERE country_name = '${countryName}'`);
+    let dbData = response.rows[0];
+
+    data.countries.forEach(countryCode => {
+      if(countryCode === dbData.country_code) {
+        isDuplicateCountry = true;
+      }
+    });
+
+    if(dbData && !isDuplicateCountry) {
+      await db.query(`INSERT INTO visited_countries(country_code) VALUES('${dbData.country_code}')`);
+    }
+
+  } catch (error) {
+    console.error(error.message);
+  }
+
+  res.redirect("/");
 });
 
 app.listen(port, () => {
