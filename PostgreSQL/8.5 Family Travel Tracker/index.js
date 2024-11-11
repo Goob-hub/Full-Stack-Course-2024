@@ -21,8 +21,8 @@ app.use(express.static("public"));
 
 let currentUserId = 1;
 
-async function checkVisisted() {
-  const result = await db.query("SELECT country_code FROM visited_countries");
+async function checkVisisted(userId) {
+  const result = await db.query(`SELECT * FROM visited_countries WHERE user_id = ${currentUserId}`);
   let countries = [];
   result.rows.forEach((country) => {
     countries.push(country.country_code);
@@ -39,14 +39,22 @@ async function getUsers() {
   return users;
 }
 
+async function getCurUser() {
+  const result = await db.query(`SELECT * FROM users WHERE id = ${currentUserId}`);
+  let curUser = result.rows[0];
+  return curUser
+}
+
 app.get("/", async (req, res) => {
-  const countries = await checkVisisted();
+  const countries = await checkVisisted(currentUserId);
   const users = await getUsers();
+  const curUser = await getCurUser();
+  
   res.render("index.ejs", {
     countries: countries,
     total: countries.length,
     users: users,
-    color: "teal",
+    color: curUser.color,
   });
 });
 
@@ -63,8 +71,8 @@ app.post("/add", async (req, res) => {
     const countryCode = data.country_code;
     try {
       await db.query(
-        "INSERT INTO visited_countries (country_code) VALUES ($1)",
-        [countryCode]
+        "INSERT INTO visited_countries (country_code, user_id) VALUES ($1, $2)",
+        [countryCode, currentUserId]
       );
       res.redirect("/");
     } catch (err) {
@@ -77,16 +85,13 @@ app.post("/add", async (req, res) => {
 
 app.post("/user", async (req, res) => {
   const input = req.body;
-  let user = input.user;
+  const user = input.user;
 
   if(input.add) {
     res.render("new.ejs");
   } else {
-    try {
-      // Grab data from database for specific user
-    } catch (error) {
-      // Handle errors
-    }
+    currentUserId = user;
+    res.redirect("/")
   }
 });
 
