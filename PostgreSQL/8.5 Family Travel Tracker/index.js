@@ -42,7 +42,7 @@ async function getUsers() {
 async function getCurUser() {
   const result = await db.query(`SELECT * FROM users WHERE id = ${currentUserId}`);
   let curUser = result.rows[0];
-  return curUser
+  return curUser;
 }
 
 app.get("/", async (req, res) => {
