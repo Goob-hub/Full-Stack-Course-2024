@@ -20,7 +20,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
 async function getItems() {
-  const result = await db.query("SELECT * FROM items");
+  const result = await db.query("SELECT * FROM items ORDER BY id ASC");
   return result.rows;
 }
 
@@ -40,7 +40,7 @@ app.post("/add", async (req, res) => {
     if(!item) {
       throw new Error("Missing data to input into database!");
     }
-    const result = await db.query("INSERT INTO ITEMS (title, is_done) VALUES($1, false)", [item]);
+    const result = await db.query("INSERT INTO ITEMS (title) VALUES($1)", [item]);
   } catch (error) {
     console.error(error);
   }
@@ -48,9 +48,27 @@ app.post("/add", async (req, res) => {
   res.redirect("/");
 });
 
-app.post("/edit", (req, res) => {});
+app.post("/edit", async (req, res) => {
+  const item_id = parseInt(req.body.updatedItemId);
+  const item_title = req.body.updatedItemTitle;
+  
+  try {
+    if(!item_id || !item_title) {
+      throw new Error("Missing data to update item on to-do list");
+    }
+    const result = await db.query(`UPDATE items SET title = $1 WHERE id = $2;`, [item_title, item_id]);
+  } catch (error) {
+    console.error(error)
+  }
 
-app.post("/delete", (req, res) => {});
+  res.redirect("/");
+});
+
+app.post("/delete", (req, res) => {
+  const item_id = req.body.deleteItemId;
+  console.log(item_id);
+  res.redirect("/");
+});
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
