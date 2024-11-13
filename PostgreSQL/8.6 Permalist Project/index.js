@@ -64,9 +64,18 @@ app.post("/edit", async (req, res) => {
   res.redirect("/");
 });
 
-app.post("/delete", (req, res) => {
-  const item_id = req.body.deleteItemId;
-  console.log(item_id);
+app.post("/delete", async (req, res) => {
+  const item_id = parseInt(req.body.deleteItemId);
+  
+  try {
+    if(isNaN(item_id)) {
+      throw new Error("Could not get item with that id because input was not a number!");
+    }
+    const result = await db.query("DELETE FROM items WHERE id = $1", [item_id]);
+  } catch (error) {
+    console.error(error);
+  }
+
   res.redirect("/");
 });
 
