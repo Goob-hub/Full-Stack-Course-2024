@@ -55,8 +55,15 @@ app.post("/register", async (req, res) => {
   const password = req.body.password;
 
   try {
-    const response = await createUser(email, password);
-    res.redirect("/");
+    const response = await db.query("SELECT * FROM users WHERE email = $1", [email]);
+
+    if(response.rows.length > 0) {
+      throw new Error("Email is already in use, try a different email!");
+    } else {
+      const response = await createUser(email, password);
+      res.redirect("/");
+    }
+
   } catch (error) {
     console.error(error);
     res.redirect("/register");
