@@ -4,6 +4,7 @@ import pg from "pg";
 import bcrypt from "bcrypt";
 import passport from "passport";
 import { Strategy } from "passport-local";
+import { GoogleStrategy } from "passport-google-oauth2";
 import session from "express-session";
 import env from "dotenv";
 
@@ -27,11 +28,11 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 const db = new pg.Client({
-  user: process.env.PG_USER,
-  host: process.env.PG_HOST,
-  database: process.env.PG_DATABASE,
-  password: process.env.PG_PASSWORD,
-  port: process.env.PG_PORT,
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASSWORD,
+  port: parseInt(process.env.DB_PORT),
 });
 db.connect();
 
@@ -64,6 +65,11 @@ app.get("/secrets", (req, res) => {
     res.redirect("/login");
   }
 });
+
+app.get("/auth/google/secrets", passport.authenticate("google", {
+  successReturnToOrRedirect: "/",
+  failureRedirect: "/login"
+}));
 
 app.post(
   "/login",
@@ -105,6 +111,14 @@ app.post("/register", async (req, res) => {
     console.log(err);
   }
 });
+
+passport.use("google", new GoogleStrategy({
+  clientID: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  callbackURL: 'http://localhost3000/auth/google/secrets',
+}, async (accessToken, refreshToken, profile, cb) => {
+  
+}));
 
 passport.use(
   new Strategy(async function verify(username, password, cb) {
