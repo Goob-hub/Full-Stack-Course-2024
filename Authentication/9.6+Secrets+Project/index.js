@@ -27,11 +27,11 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 const db = new pg.Client({
-  user: process.env.PG_USER,
-  host: process.env.PG_HOST,
-  database: process.env.PG_DATABASE,
-  password: process.env.PG_PASSWORD,
-  port: process.env.PG_PORT,
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASSWORD,
+  port: parseInt(process.env.DB_PORT),
 });
 db.connect();
 
@@ -56,11 +56,16 @@ app.get("/logout", (req, res) => {
   });
 });
 
-app.get("/secrets", (req, res) => {
+app.get("/secrets", async (req, res) => {
+  let userSecret;
   if (req.isAuthenticated()) {
-    res.render("secrets.ejs");
-
-    //TODO: Update this to pull in the user secret to render in secrets.ejs
+    try {
+      const response = await db.query("SELECT secret FROM users WHERE email = $1", [req.user.email]);
+      userSecret = response.rows[0].secret;
+    } catch (error) {
+      console.log(error);
+    }
+    res.render("secrets.ejs", {secret: userSecret});
   } else {
     res.redirect("/login");
   }
@@ -68,6 +73,10 @@ app.get("/secrets", (req, res) => {
 
 //TODO: Add a get route for the submit button
 //Think about how the logic should work with authentication.
+
+app.get("/submit", (req, res) => {
+  res.render("submit.ejs");
+});
 
 app.get(
   "/auth/google",
@@ -83,6 +92,18 @@ app.get(
     failureRedirect: "/login",
   })
 );
+
+app.post("/submit", async (req, res) => {
+  const secret = req.body.secret;
+  const user = req.user; 
+  try {
+    const response = await db.query("Update users set secret=$1 WHERE email = $2;", [secret, user.email]);
+  } catch (error) {
+    console.log(error);
+  }
+
+  res.redirect("/secrets");
+});
 
 app.post(
   "/login",
@@ -170,7 +191,7 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, cb) => {
       try {
-        console.log(profile);
+        // console.log(profile);
         const result = await db.query("SELECT * FROM users WHERE email = $1", [
           profile.email,
         ]);
